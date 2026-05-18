@@ -124,7 +124,7 @@ h1 span{color:var(--cyan)}
     <p class="hsub">avalie seus conhecimentos e receba um plano de estudos personalizado</p>
   </header>
 
-  <div id="s-intro" class="screen active">
+  <div id="s-intro" class="screen">
     <div class="intro-box">
       <h2>// Sobre o diagnostico</h2>
       <p>Este questionario avalia seu nivel em <strong>8 dominios</strong> essenciais. Com base no resultado, um <strong>roadmap de 24 semanas</strong> e gerado automaticamente para a trilha <span style="color:var(--cyan)">SOC &rarr; Pentest &rarr; Consultoria</span>.</p>
@@ -159,7 +159,7 @@ h1 span{color:var(--cyan)}
     <div class="qnav"><button class="btn" id="btnnxt" onclick="nextQ()" style="display:none">Proxima &rarr;</button></div>
   </div>
 
-  <div id="s-results" class="screen">
+  <div id="s-results" class="screen active">
     <div class="rh">
       <h2>// Diagnostico Concluido</h2>
       <div class="sbig" id="tscore">0%</div>
@@ -716,6 +716,18 @@ QS.forEach(function(q){ DOMS[q.d].total++; });
 /* ── state ── */
 var cur = 0, answered = false, curShuf = [], curCorrect = 0, SCORES = {};
 
+/* Carregar resultados: localStorage ou scores do diagnostico de 18/05/2026 */
+(function loadScores(){
+  var defaults = {redes:63,linux:40,cripto:80,security:83,web:60,windows:60,tools:80,comptia:100};
+  var saved = null;
+  try { var raw = localStorage.getItem('cybersec_result'); if(raw) saved = JSON.parse(raw); } catch(e){}
+  var data = saved || defaults;
+  Object.keys(data).forEach(function(k){
+    if(DOMS[k]){ SCORES[k] = data[k]; DOMS[k].correct = Math.round(data[k]/100*DOMS[k].total); }
+  });
+  if(!saved){ try{ localStorage.setItem('cybersec_result', JSON.stringify(defaults)); }catch(e){} }
+})();
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
   document.getElementById('s-' + id).classList.add('active');
@@ -820,11 +832,13 @@ function buildResults() {
     row.appendChild(topDiv); row.appendChild(track); row.appendChild(status);
     dr.appendChild(row);
   });
+  try{ localStorage.setItem('cybersec_result', JSON.stringify(SCORES)); }catch(e){}
 }
 
 window.showRes  = function(){ showScreen('results'); };
 window.goRes    = function(){ showScreen('results'); };
 window.restart  = function(){
+  try{ localStorage.removeItem('cybersec_result'); }catch(e){}
   cur = 0; answered = false; SCORES = {};
   Object.values(DOMS).forEach(function(d){ d.correct = 0; });
   showScreen('intro');
@@ -1181,6 +1195,8 @@ function getWeeks4() {
      res:['GitHub Pages (portfolio gratis)','Medium para write-ups','LinkedIn Premium (1 mes)','Calendly para reunioes','Notion para gestao da consultoria']}
   ];
 }
+
+buildResults();
 
 })(); /* IIFE - evita poluicao do escopo global */
 </script>
